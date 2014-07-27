@@ -178,6 +178,16 @@ class ZnWP_Entity_Collection_Taxonomy
                     );
                 } // end type
 
+                // For saving data in metabox when adding or editing post
+                foreach ($this->get_post_types($plugin_name) as $post_type) {
+                    add_action(
+                        "save_post_{$post_type}",
+                        function ($a) use ($me, $plugin_name) {
+                            return $me->save_post_meta($plugin_name, $a);
+                        }
+                    );
+                }
+
                 // Check if default terms for 3rd party plugin have been added - add once only
                 if (!isset($me_info[$plugin_name])) {
                     // Need taxonomies to be registered first hence hook on to init
@@ -195,11 +205,6 @@ class ZnWP_Entity_Collection_Taxonomy
                 }
             } // end action
         } // end actions
-
-        // For saving data in metabox when adding or editing post
-        foreach ($this->get_post_types() as $post_type) {
-            add_action("save_post_{$post_type}", array($this, 'save_post_meta'));
-        }
 
         // Check if any of the 3rd party plugins that were init previously but has been deactivated and remove
         // default terms if so. is_plugin_active() does not exist at this point, so get option manually from db
@@ -647,12 +652,13 @@ class ZnWP_Entity_Collection_Taxonomy
      *
      * This saves all the checked entities for the post.
      *
-     * @param  int $post_id The ID of the post
+     * @param  string $plugin_name Name of 3rd party plugin
+     * @param  int    $post_id     The ID of the post
      * @return void
      */
-    public function save_post_meta($post_id)
+    public function save_post_meta($plugin_name, $post_id)
     {
-        $field = $this->get_taxonomy(self::ENTITY);
+        $field = $this->get_taxonomy($plugin_name, self::ENTITY);
 
         // Update the post metadata
         if (isset($_POST[$field])) {
