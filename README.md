@@ -16,56 +16,6 @@ Steps
   - Copy the folder to your WordPress plugins folder OR compress the renamed folder and upload via the WordPress admin interface
 
 ### Usage
-This plugin only has 1 action hook - `znwp_entity_collection_taxonomy_run`. It is designed to be used by multiple 3rd party plugins on the same WordPress installation to add custom taxonomies.
+This plugin only has 1 action hook - `znwp_entity_collection_taxonomy_run` which takes in a config array. It is designed to be used by multiple 3rd party plugins on the same WordPress installation to add custom taxonomies.
 
-The demo code is as follows:
-```php
-$collection_terms = array(
-    'Red' => array(
-        'slug' => 'primary-color-red',
-        'term_meta' => array('background_color' => '#ff0000', 'color' => '#ffffff'),
-    ),
-    'Green' => array(
-        'slug' => 'primary-color-green',
-        'term_meta' => array('background_color' => '#00ff00', 'color' => '#000000'),
-    ),
-    'Blue' => array(
-        'slug' => 'primary-color-blue',
-        'term_meta' => array('background_color' => '#0000ff', 'color' => '#ffffff'),
-    ),
-);
-
-$entity_terms = array(
-    'Cyan' => array(
-        'slug' => 'secondary-color-cyan',
-        'term_meta' => array('primary_color' => array('Green', 'Blue')),
-    ),
-    'Magenta' => array(
-        'slug' => 'secondary-color-magenta',
-        'term_meta' => array('primary_color' => array('Red', 'Blue')),
-    ),
-    'Yellow' => array(
-        'slug' => 'secondary-color-yellow',
-        'term_meta' => array('primary_color' => array('Red', 'Green')),
-    ),
-);
-
-add_action('znwp_entity_collection_taxonomy_run', function () use ($collection_terms, $entity_terms) {
-    return array(
-        'plugin_name' => plugin_basename(__FILE__),
-        'post_type' => array('post'),
-        'collection' => array(
-            'taxonomy' => 'primary_color',
-            'singular_name' => 'Primary Color',
-            'plural_name' => 'Primary Colors',
-            'terms' => $collection_terms,
-        ),
-        'entity' => array(
-            'taxonomy' => 'secondary_color',
-            'singular_name' => 'Secondary Color',
-            'plural_name' => 'Secondary Colors',
-            'terms' => $entity_terms,
-        ),
-    );
-});
-```
+See the [Demo Code](https://raw.githubusercontent.com/zionsg/ZnWP-Entity-Collection-Taxonomy-Plugin/master/demo.php) on how to use the action hook and where to find the custom taxonomies after running it.
