@@ -153,8 +153,8 @@ class ZnWP_Entity_Collection_Taxonomy
                     );
                     add_filter(
                         "manage_edit-{$taxonomy}_columns",
-                        function () use ($me, $plugin_name, $type) {
-                            return $me->{"{$type}_columns"}($plugin_name);
+                        function ($a) use ($me, $plugin_name, $type) {
+                            return $me->{"{$type}_columns"}($plugin_name, $a);
                         }
                     );
                     add_filter(
