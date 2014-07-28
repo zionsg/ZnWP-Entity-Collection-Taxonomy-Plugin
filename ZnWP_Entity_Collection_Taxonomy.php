@@ -3,13 +3,13 @@
  * Plugin class
  *
  * This plugin is designed to allow multiple 3rd party plugins to use it to register custom taxonomies.
- * Default terms added for 3rd party plugins will be removed from the db when those are deactivated but not so
- * when this plugin is deactivated. Default terms from the demo code are not removed in any case.
+ * Default terms added for 3rd party plugins will be removed when those are deactivated, not when
+ * this plugin is deactivated.
  *
  * Info on action hook for setup:
  *     @hook   string   znwp_entity_collection_taxonomy_run
  *     @param  callback No additional arguments for callback needed
- *     @return array    See $config_defaults and demo code in main plugin file for examples
+ *     @return array    See $config_defaults and demo plugin for examples
  *
  * @to-do   issue with '-master' in zip file when downloading from GitHub
  *          @see http://stackoverflow.com/questions/23642392/create-release-zip-file-on-github-without-tag-name-in-it
@@ -42,11 +42,6 @@ class ZnWP_Entity_Collection_Taxonomy
      * @var bool
      */
     protected $logging_on = false;
-
-    /**
-     * Name of demo plugin
-     */
-    protected $demo_plugin_name = 'znwp_entity_collection_taxonomy_plugin/demo.php';
 
     /**
      * Config defaults for each client
@@ -210,7 +205,7 @@ class ZnWP_Entity_Collection_Taxonomy
         // default terms if so. is_plugin_active() does not exist at this point, so get option manually from db
         $active_plugins = get_option('active_plugins', array());
         foreach ($me_info as $plugin_name => $info) {
-            if ($plugin_name != $this->demo_plugin_name && !in_array($plugin_name, $active_plugins)) {
+            if (!in_array($plugin_name, $active_plugins)) {
                 foreach ($this->types as $type) {
                     // Need to register taxonomies first on init hook, remove terms, then unregister them
                     $plugin_config = $me_info[$plugin_name];
