@@ -1,15 +1,12 @@
 <?php
-/**
- * Demo code
- *
- * This will register 'Primary Colors' as the collection taxonomy and 'Secondary Colors' as the entity taxonomy.
- * The taxonomies are registered with the WordPress default 'post' type and can be managed like Post Categories.
- * When adding or editing a post, a metabox will display all the entities grouped under the collections.
- *
- * @package ZnWP Entity Collection Taxonomy Plugin
- * @author  Zion Ng <zion@intzone.com>
- * @link    https://github.com/zionsg/ZnWP-Entity-Collection-Taxonomy-Plugin for canonical source repository
- */
+/*
+Plugin Name: Demo plugin for ZnWP Entity Collection Taxonomy Plugin
+Plugin URI:  https://github.com/zionsg/ZnWP-Entity-Collection-Taxonomy-Plugin
+Description: This will register 'Primary Colors' as the collection taxonomy and 'Secondary Colors' as the entity taxonomy. The taxonomies are registered with the WordPress default 'post' type and can be managed like Post Categories (hover over Posts on the Dashboard menu). When adding or editing a post, a metabox will display all the entities grouped under the collections.
+Author:      Zion Ng
+Author URI:  http://intzone.com/
+Version:     1.0.0
+*/
 
 $collection_terms = array(
     'Red' => array(
