@@ -599,9 +599,12 @@ class ZnWP_Entity_Collection_Taxonomy
             add_meta_box(
                 "{$taxonomy}div",
                 __($this->get_plural_name($plugin_name, self::ENTITY)),
-                function () use ($me, $plugin_name, $taxonomy, $collection_taxonomy, $entities, $collections) {
+                function () use (
+                    $me, $plugin_name, $taxonomy, $collection_taxonomy, $entities, $collections
+                ) {
+                    // Pass in null for post ID so as to use the current post ID at the time the metabox is shown
                     print $me->entity_generate_form_html(
-                        $plugin_name, $taxonomy, $collection_taxonomy, $entities, $collections
+                        $plugin_name, null, $taxonomy, $collection_taxonomy, $entities, $collections
                     );
                 },
                 $post_type,
@@ -620,6 +623,8 @@ class ZnWP_Entity_Collection_Taxonomy
      * Method is set as public to allow for use in frontend pages.
      *
      * @param  string $plugin_name         Name of 3rd party plugin
+     * @param  int    $post_id             Optional post ID. This param is needed as the form may not
+     *                                     be for the current post, eg. on frontend pages
      * @param  string $taxonomy            Optional entity taxonomy
      * @param  string $collection_taxonomy Optional collection taxonomy
      * @param  array  $entities            Optional entities
@@ -627,10 +632,16 @@ class ZnWP_Entity_Collection_Taxonomy
      * @return string
      */
     public function entity_generate_form_html(
-        $plugin_name, $taxonomy = null, $collection_taxonomy = null, $entities = null, $collections = null
+        $plugin_name,
+        $post_id = null,
+        $taxonomy = null,
+        $collection_taxonomy = null,
+        $entities = null,
+        $collections = null
     ) {
-        global $post; // access current post
+        global $post;
 
+        $post_id             = (null === $post_id) ? $post->ID : $post_id;
         $taxonomy            = (null === $taxonomy) ? $this->get_taxonomy($plugin_name, self::ENTITY) : $taxonomy;
         $collection_taxonomy = (null === $collection_taxonomy)
                              ? $this->get_taxonomy($plugin_name, self::COLLECTION)
@@ -638,7 +649,7 @@ class ZnWP_Entity_Collection_Taxonomy
         $entities            = (null === $entities) ? $this->fetch_all($taxonomy) : $entities;
         $collections         = (null === $collections) ? $this->fetch_all($collection_taxonomy) : $collections;
 
-        $curr_entities = get_post_meta($post->ID, $taxonomy, true) ?: array();
+        $curr_entities = get_post_meta($post_id, $taxonomy, true) ?: array();
 
         $html = '';
         foreach ($collections as $collection) {
