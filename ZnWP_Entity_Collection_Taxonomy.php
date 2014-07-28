@@ -802,7 +802,7 @@ class ZnWP_Entity_Collection_Taxonomy
             'public'            => true,
             'hierarchical'      => false,
             'show_ui'           => true,
-            'show_in_nav_menus' => true,
+            'show_in_nav_menus' => false,
             'query_var'         => true,
             'rewrite'           => true,
         );
