@@ -584,6 +584,8 @@ class ZnWP_Entity_Collection_Taxonomy
      */
     public function entity_meta_box($plugin_name)
     {
+        $me = $this;
+
         $taxonomy = $this->get_taxonomy($plugin_name, self::ENTITY);
         $collection_taxonomy = $this->get_taxonomy($plugin_name, self::COLLECTION);
 
@@ -597,49 +599,83 @@ class ZnWP_Entity_Collection_Taxonomy
             add_meta_box(
                 "{$taxonomy}div",
                 __($this->get_plural_name($plugin_name, self::ENTITY)),
-                function () use ($taxonomy, $collection_taxonomy, $collections, $entities) {
-                    global $post; // access current post
-                    $curr_entities = get_post_meta($post->ID, $taxonomy, true) ?: array();
-
-                    foreach ($collections as $collection) {
-                        printf(
-                            '<h4><span style="background-color:%s; color:%s">&nbsp;%s&nbsp;</span></h4>',
-                            $collection->background_color,
-                            $collection->color,
-                            $collection->name
-                        );
-
-                        $cols = 3;
-                        $col_width = (100 / 3) . '%';
-                        $col_cnt = 0;
-
-                        print '<table width="100%" border="0">';
-                        foreach ($entities as $entity) {
-                            if (!in_array($collection->name, $entity->{$collection_taxonomy})) {
-                                continue;
-                            }
-                            print ((0 == $col_cnt % $cols) ? '<tr>' : '');
-
-                            printf(
-                                '<td width="%1$s"><input id="%2$s" name="%2$s[]" type="checkbox" '
-                                . 'value="%3$s" %4$s style="width:auto;" />%3$s</td>',
-                                $col_width,
-                                $taxonomy,
-                                $entity->name,
-                                in_array($entity->name, $curr_entities) ? 'checked="checked"' : ''
-                            );
-
-                            print ((($cols - 1) == $col_cnt % $cols) ? '</tr>' : '');
-                            $col_cnt++;
-                        }
-                        print '</table>';
-                    }
+                function () use ($me, $plugin_name, $taxonomy, $collection_taxonomy, $entities, $collections) {
+                    print $me->entity_generate_form_html(
+                        $plugin_name, $taxonomy, $collection_taxonomy, $entities, $collections
+                    );
                 },
                 $post_type,
                 'normal',
                 'default'
             );
         }
+    }
+
+    /**
+     * Generate form HTML for all entities and group under collections
+     *
+     * Optional params are to allow entity_meta_box() to pass in pre-computed variables
+     * instead of querying in each iteration of the loop.
+     *
+     * Method is set as public to allow for use in frontend pages.
+     *
+     * @param  string $plugin_name         Name of 3rd party plugin
+     * @param  string $taxonomy            Optional entity taxonomy
+     * @param  string $collection_taxonomy Optional collection taxonomy
+     * @param  array  $entities            Optional entities
+     * @param  array  $collections         Optional collections
+     * @return string
+     */
+    public function entity_generate_form_html(
+        $plugin_name, $taxonomy = null, $collection_taxonomy = null, $entities = null, $collections = null
+    ) {
+        global $post; // access current post
+
+        $taxonomy            = (null === $taxonomy) ? $this->get_taxonomy($plugin_name, self::ENTITY) : $taxonomy;
+        $collection_taxonomy = (null === $collection_taxonomy)
+                             ? $this->get_taxonomy($plugin_name, self::COLLECTION)
+                             : $collection_taxonomy;
+        $entities            = (null === $entities) ? $this->fetch_all($taxonomy) : $entities;
+        $collections         = (null === $collections) ? $this->fetch_all($collection_taxonomy) : $collections;
+
+        $curr_entities = get_post_meta($post->ID, $taxonomy, true) ?: array();
+
+        $html = '';
+        foreach ($collections as $collection) {
+            $html .= sprintf(
+                '<h4><span style="background-color:%s; color:%s">&nbsp;%s&nbsp;</span></h4>',
+                $collection->background_color,
+                $collection->color,
+                $collection->name
+            );
+
+            $cols = 3;
+            $col_width = (100 / 3) . '%';
+            $col_cnt = 0;
+
+            $html .= '<table width="100%" border="0">';
+            foreach ($entities as $entity) {
+                if (!in_array($collection->name, $entity->{$collection_taxonomy})) {
+                    continue;
+                }
+                $html .= ((0 == $col_cnt % $cols) ? '<tr>' : '');
+
+                $html .= sprintf(
+                    '<td width="%1$s"><input id="%2$s" name="%2$s[]" type="checkbox" '
+                    . 'value="%3$s" %4$s style="width:auto;" />%3$s</td>',
+                    $col_width,
+                    $taxonomy,
+                    $entity->name,
+                    in_array($entity->name, $curr_entities) ? 'checked="checked"' : ''
+                );
+
+                $html .= ((($cols - 1) == $col_cnt % $cols) ? '</tr>' : '');
+                $col_cnt++;
+            }
+            $html .= '</table>';
+        }
+
+        return $html;
     }
 
     /**
