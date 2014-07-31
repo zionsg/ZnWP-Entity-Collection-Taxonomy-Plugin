@@ -474,8 +474,8 @@ class ZnWP_Entity_Collection_Taxonomy
         $taxonomy = $this->get_taxonomy($plugin_name, self::COLLECTION);
 
         foreach ($this->get_post_types($plugin_name) as $post_type) {
-            remove_meta_box("tagsdiv-{$taxonomy}", 'post', 'side');
-            remove_meta_box("{$taxonomy}div", 'post', 'side');
+            remove_meta_box("tagsdiv-{$taxonomy}", $post_type, 'side');
+            remove_meta_box("{$taxonomy}div", $post_type, 'side');
         }
     }
 
@@ -593,8 +593,8 @@ class ZnWP_Entity_Collection_Taxonomy
         $collections = $this->fetch_all($collection_taxonomy);
 
         foreach ($this->get_post_types($plugin_name) as $post_type) {
-            remove_meta_box("tagsdiv-{$taxonomy}", 'post', 'side');
-            remove_meta_box("{$taxonomy}div", 'post', 'side');
+            remove_meta_box("tagsdiv-{$taxonomy}", $post_type, 'side');
+            remove_meta_box("{$taxonomy}div", $post_type, 'side');
 
             add_meta_box(
                 "{$taxonomy}div",
