@@ -32,6 +32,8 @@ class ZnWP_Entity_Collection_Taxonomy
     /**
      * Put types in array for convenient iteration
      *
+     * Collection must come before entity - order is important especially when adding terms.
+     *
      * @var array
      */
     protected $types = array(self::COLLECTION, self::ENTITY);
@@ -329,6 +331,17 @@ class ZnWP_Entity_Collection_Taxonomy
     /**
      * Add default terms for both taxonomies for plugin
      *
+     * 3rd party plugins will most probably use term slugs to link entities to collections
+     * as it is not possible for them to know the term_id beforehand.
+     *
+     * Hence, extra processing needed for entity terms as the slugs instead of term_id may be
+     * use for collection terms under the entity term metadata, eg:
+     *   'My Entity One' => array(
+     *     'slug' => 'my-entity-one',
+     *     'term_meta' => array('my_collection' => array(1234, 'my-collection-bravo')), // 1234 assumed as term_id
+     *   )
+     *
+     *
      * @param string $plugin_name Name of 3rd party plugin
      * return void
      */
@@ -344,7 +357,31 @@ class ZnWP_Entity_Collection_Taxonomy
                 continue;
             }
 
+            // Extra processing needed to convert slugs for linked collections into term_id
+            // Imperative that collection terms are already added
+            if (self::ENTITY == $type) {
+                $collection_taxonomy = $this->get_taxonomy($plugin_name, self::COLLECTION);
+                $collection_terms = get_terms($collection_taxonomy, array('hide_empty' => false));
+                $collection_terms_by_slug = array();
+                foreach ($collection_terms as $collection_term) {
+                    $collection_terms_by_slug[$collection_term->slug] = $collection_term->term_id;
+                }
+            }
+
             foreach ($terms as $term => $args) {
+                if (self::ENTITY == $type && isset($args['term_meta'][$collection_taxonomy])) {
+                    foreach ($args['term_meta'][$collection_taxonomy] as $key => $collection_term) {
+                        if (is_int($collection_term)) {
+                            continue; // assumes that it is already a term_id
+                        }
+                        // If not found, leave it as it is as $collection_term might already exist in db
+                        if (isset($collection_terms_by_slug[$collection_term])) {
+                            $args['term_meta'][$collection_taxonomy][$key] =
+                                $collection_terms_by_slug[$collection_term];
+                        }
+                    }
+                }
+
                 $result = wp_insert_term(
                     $term,
                     $taxonomy,
@@ -493,7 +530,7 @@ class ZnWP_Entity_Collection_Taxonomy
         $options = array();
         $collections = $this->fetch_all($collection_taxonomy);
         foreach ($collections as $collection) {
-            $options[$collection->name] = sprintf(
+            $options[$collection->term_id] = sprintf( // index by term_id which will never change unlike slug
                 '<span style="background-color:%s; color:%s;">&nbsp;%s&nbsp;</span>',
                 $collection->background_color,
                 $collection->color,
@@ -564,12 +601,13 @@ class ZnWP_Entity_Collection_Taxonomy
         if ($collection_taxonomy == $column_name) {
             $term_meta = get_option("{$taxonomy}_term_{$term_id}");
             if (isset($term_meta[$collection_taxonomy])) {
-                foreach ($term_meta[$collection_taxonomy] as $collection_name) {
+                foreach ($term_meta[$collection_taxonomy] as $collection_term_id) {
+                    $collection = $collections[$collection_term_id];
                     printf(
                         '<span style="background-color:%s; color:%s;">&nbsp;%s&nbsp;</span><br />',
-                        $collections[$collection_name]->background_color,
-                        $collections[$collection_name]->color,
-                        $collection_name
+                        $collection->background_color,
+                        $collection->color,
+                        $collection->name
                     );
                 }
             }
@@ -589,7 +627,7 @@ class ZnWP_Entity_Collection_Taxonomy
         $taxonomy = $this->get_taxonomy($plugin_name, self::ENTITY);
         $collection_taxonomy = $this->get_taxonomy($plugin_name, self::COLLECTION);
 
-        $entities    = $this->fetch_all($taxonomy );
+        $entities    = $this->fetch_all($taxonomy);
         $collections = $this->fetch_all($collection_taxonomy);
 
         foreach ($this->get_post_types($plugin_name) as $post_type) {
@@ -649,7 +687,7 @@ class ZnWP_Entity_Collection_Taxonomy
         $entities            = (null === $entities) ? $this->fetch_all($taxonomy) : $entities;
         $collections         = (null === $collections) ? $this->fetch_all($collection_taxonomy) : $collections;
 
-        $curr_entities = $this->get_post_entities_names($plugin_name, $post_id);
+        $curr_entities = $this->get_post_entities($plugin_name, $post_id);
 
         $html = '';
         foreach ($collections as $collection) {
@@ -666,18 +704,19 @@ class ZnWP_Entity_Collection_Taxonomy
 
             $html .= '<table width="100%" border="0">';
             foreach ($entities as $entity) {
-                if (!in_array($collection->name, $entity->{$collection_taxonomy})) {
+                if (!in_array($collection->term_id, $entity->{$collection_taxonomy})) {
                     continue;
                 }
                 $html .= ((0 == $col_cnt % $cols) ? '<tr>' : '');
 
                 $html .= sprintf(
                     '<td width="%1$s"><input id="%2$s" name="%2$s[]" type="checkbox" '
-                    . 'value="%3$s" %4$s style="width:auto;" />%3$s</td>',
+                    . 'value="%3$d" %4$s style="width:auto;" />%5$s</td>',
                     $col_width,
                     $taxonomy,
-                    $entity->name,
-                    in_array($entity->name, $curr_entities) ? 'checked="checked"' : ''
+                    $entity->term_id,
+                    isset($curr_entities[$entity->term_id]) ? 'checked="checked"' : '',
+                    $entity->name
                 );
 
                 $html .= ((($cols - 1) == $col_cnt % $cols) ? '</tr>' : '');
@@ -705,24 +744,36 @@ class ZnWP_Entity_Collection_Taxonomy
 
         // Update the post terms
         if (isset($_POST[$taxonomy])) {
-            wp_set_object_terms($post_id, $_POST[$taxonomy], $taxonomy, false); // overwrite, don't append
+            // Must cast all the term_id values to int else they will be misinterpreted as slugs
+            wp_set_object_terms($post_id, array_map('intval', $_POST[$taxonomy]), $taxonomy, false); // overwrite
         }
     }
 
     /**
-     * Get names of entities linked to a post
+     * Get entities linked to a post
+     *
+     * Entities will be indexed by term_id to facilitate searching.
      *
      * @param  string $plugin_name Name of 3rd party plugin
      * @param  int    $post_id     The ID of the post
      * @param  string $taxonomy    Optional entity taxonomy. Allows caller to pass in pre-computed value
      * @return array
      */
-    public function get_post_entities_names($plugin_name, $post_id, $taxonomy = null)
+    public function get_post_entities($plugin_name, $post_id, $taxonomy = null)
     {
         $taxonomy = (null === $taxonomy) ? $this->get_taxonomy($plugin_name, self::ENTITY) : $taxonomy;
-        $entities = wp_get_object_terms($post_id, $taxonomy, array('fields' => 'names'));
+        $entities = wp_get_object_terms($post_id, $taxonomy);
 
-        return ($entities instanceof WP_Error ? array() : $entities);
+        if ($entities instanceof WP_Error) {
+            return array();
+        }
+
+        $entities_by_term_id = array();
+        foreach ($entities as $entity) {
+            $entities_by_term_id[$entity->term_id] = $entity;
+        }
+
+        return $entities_by_term_id;
     }
 
     /**
@@ -782,7 +833,9 @@ class ZnWP_Entity_Collection_Taxonomy
             return $this->post_types;
         }
 
-        return isset($this->config_by_plugin[$plugin_name]['post_type']) ? $this->config_by_plugin[$plugin_name]['post_type'] : array();
+        return isset($this->config_by_plugin[$plugin_name]['post_type'])
+             ? $this->config_by_plugin[$plugin_name]['post_type']
+             : array();
     }
 
     /**
@@ -912,26 +965,26 @@ class ZnWP_Entity_Collection_Taxonomy
             $value = isset($term_meta[$field]) ? $term_meta[$field] : '';
             if ('dropdown' == $type) {
                 $element = sprintf('<select id="term_meta[%1$s]" name="term_meta[%1$s]">', $field);
-                foreach ($options as $option => $optionLabel) { // cannot use $label as it is used already
+                foreach ($options as $option => $option_label) { // cannot use $label as it is used already
                     $element .= sprintf(
                         '<option value="%s" %s>%s</option>' . PHP_EOL,
                         $option,
                         (in_array($option, $selected_options) ? 'selected="selected"' : ''),
-                        $optionLabel
+                        $option_label
                     );
                 }
                 $element .= '</select>';
             } elseif ('multicheckbox' == $type) {
                 // Style for checkbox set to width:auto else will elongate when editing term
                 $element = '';
-                foreach ($options as $option => $optionLabel) {
+                foreach ($options as $option => $option_label) {
                     $element .= sprintf( // note the [] for name
                         '<input id="term_meta[%1$s]" name="term_meta[%1$s][]" type="checkbox" '
                         . 'value="%2$s" %3$s style="width:auto;" />%4$s%5$s',
                         $field,
                         $option,
                         (in_array($option, $selected_options) ? 'checked="checked"' : ''),
-                        $optionLabel,
+                        $option_label,
                         $option_separator
                     );
                 }
@@ -988,7 +1041,7 @@ class ZnWP_Entity_Collection_Taxonomy
     /**
      * Fetch all terms for a taxonomy including the term metadata
      *
-     * To facilitate searching, terms are put into an associative array with term_name as key.
+     * Terms will be indexed by term_id to facilitate searching.
      *
      * @param  string $taxonomy
      * @return object[]
@@ -997,16 +1050,16 @@ class ZnWP_Entity_Collection_Taxonomy
     {
         // hide_empty=false will return all terms including those with no posts assigned to them
         $terms = get_terms($taxonomy, array('hide_empty' => false));
-        $terms_by_name = array();
+        $results = array();
 
         foreach ($terms as $key => $term) {
             $term_meta = get_option("{$taxonomy}_term_{$term->term_id}", array());
             foreach ($term_meta as $meta => $value) {
                 $term->$meta = $value;
             }
-            $terms_by_name[$term->name] = $term;
+            $results[$term->term_id] = $term;
         }
 
-        return $terms_by_name;
+        return $results;
     }
 }
