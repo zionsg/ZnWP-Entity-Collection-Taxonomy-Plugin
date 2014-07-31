@@ -23,18 +23,20 @@ $collection_terms = array(
     ),
 );
 
+// As it is not possible for us to know the term_id of the collection terms beforehand,
+// we will use the slugs of the collection terms instead to link the collection terms to the entity term
 $entity_terms = array(
     'Cyan' => array(
         'slug' => 'secondary-color-cyan',
-        'term_meta' => array('primary_color' => array('Green', 'Blue')),
+        'term_meta' => array('primary_color' => array('primary-color-green', 'primary-color-blue')),
     ),
     'Magenta' => array(
         'slug' => 'secondary-color-magenta',
-        'term_meta' => array('primary_color' => array('Red', 'Blue')),
+        'term_meta' => array('primary_color' => array('primary-color-red', 'primary-color-blue')),
     ),
     'Yellow' => array(
         'slug' => 'secondary-color-yellow',
-        'term_meta' => array('primary_color' => array('Red', 'Green')),
+        'term_meta' => array('primary_color' => array('primary-color-red', 'primary-color-green')),
     ),
 );
 
