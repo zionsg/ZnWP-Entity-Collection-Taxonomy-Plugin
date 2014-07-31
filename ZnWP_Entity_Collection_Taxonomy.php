@@ -178,7 +178,7 @@ class ZnWP_Entity_Collection_Taxonomy
                     add_action(
                         "save_post_{$post_type}",
                         function ($a) use ($me, $plugin_name) {
-                            return $me->save_post_meta($plugin_name, $a);
+                            return $me->save_post_entities($plugin_name, $a);
                         }
                     );
                 }
@@ -649,7 +649,7 @@ class ZnWP_Entity_Collection_Taxonomy
         $entities            = (null === $entities) ? $this->fetch_all($taxonomy) : $entities;
         $collections         = (null === $collections) ? $this->fetch_all($collection_taxonomy) : $collections;
 
-        $curr_entities = get_post_meta($post_id, $taxonomy, true) ?: array();
+        $curr_entities = $this->get_post_entities_names($plugin_name, $post_id);
 
         $html = '';
         foreach ($collections as $collection) {
@@ -690,22 +690,39 @@ class ZnWP_Entity_Collection_Taxonomy
     }
 
     /**
-     * Callback for saving metadata when a post is saved
+     * Callback for saving all the selected entities when a post is saved
      *
-     * This saves all the checked entities for the post.
+     * update_post_meta() is not used as that is for custom fields in a post, which is 1-to-1.
+     * wp_set_object_terms() links multiple taxonomy terms to a post, which is many-to-1.
      *
      * @param  string $plugin_name Name of 3rd party plugin
      * @param  int    $post_id     The ID of the post
      * @return void
      */
-    public function save_post_meta($plugin_name, $post_id)
+    public function save_post_entities($plugin_name, $post_id)
     {
-        $field = $this->get_taxonomy($plugin_name, self::ENTITY);
+        $taxonomy = $this->get_taxonomy($plugin_name, self::ENTITY);
 
-        // Update the post metadata
-        if (isset($_POST[$field])) {
-            update_post_meta($post_id, $field, $_POST[$field]);
+        // Update the post terms
+        if (isset($_POST[$taxonomy])) {
+            wp_set_object_terms($post_id, $_POST[$taxonomy], $taxonomy, false); // overwrite, don't append
         }
+    }
+
+    /**
+     * Get names of entities linked to a post
+     *
+     * @param  string $plugin_name Name of 3rd party plugin
+     * @param  int    $post_id     The ID of the post
+     * @param  string $taxonomy    Optional entity taxonomy. Allows caller to pass in pre-computed value
+     * @return array
+     */
+    public function get_post_entities_names($post_id, $taxonomy = null)
+    {
+        $taxonomy = (null === $taxonomy) ? $this->get_taxonomy($plugin_name, self::ENTITY) : $taxonomy ;
+        $entities = wp_get_object_terms(8, 'mrt_station', array('fields' => 'names'));
+
+        return ($entities instanceof WP_Error ? array() : $entities);
     }
 
     /**
