@@ -369,7 +369,7 @@ class ZnWP_Entity_Collection_Taxonomy
         $this->log(__FUNCTION__, func_get_args());
 
         foreach ($this->types as $type) {
-            // $taxonomy  = $this->get_taxonomy($plugin_name, $type);
+            // hide_empty=false will return all terms including those with no posts assigned to them
             $taxonomy = $plugin_config[$type]['taxonomy'];
             $tax_terms = get_terms($taxonomy, array('hide_empty' => false));
 
@@ -995,6 +995,7 @@ class ZnWP_Entity_Collection_Taxonomy
      */
     protected function fetch_all($taxonomy)
     {
+        // hide_empty=false will return all terms including those with no posts assigned to them
         $terms = get_terms($taxonomy, array('hide_empty' => false));
         $terms_by_name = array();
 
