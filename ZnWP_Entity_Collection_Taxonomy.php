@@ -717,10 +717,10 @@ class ZnWP_Entity_Collection_Taxonomy
      * @param  string $taxonomy    Optional entity taxonomy. Allows caller to pass in pre-computed value
      * @return array
      */
-    public function get_post_entities_names($post_id, $taxonomy = null)
+    public function get_post_entities_names($plugin_name, $post_id, $taxonomy = null)
     {
-        $taxonomy = (null === $taxonomy) ? $this->get_taxonomy($plugin_name, self::ENTITY) : $taxonomy ;
-        $entities = wp_get_object_terms(8, 'mrt_station', array('fields' => 'names'));
+        $taxonomy = (null === $taxonomy) ? $this->get_taxonomy($plugin_name, self::ENTITY) : $taxonomy;
+        $entities = wp_get_object_terms($post_id, $taxonomy, array('fields' => 'names'));
 
         return ($entities instanceof WP_Error ? array() : $entities);
     }
