@@ -13,7 +13,6 @@
  *
  * @to-do   issue with '-master' in zip file when downloading from GitHub
  *          @see http://stackoverflow.com/questions/23642392/create-release-zip-file-on-github-without-tag-name-in-it
- * @to-do   (fetch_all()): A query is done for each term to get the custom metadata - not efficient
  * @package ZnWP Entity Collection Taxonomy Plugin
  * @author  Zion Ng <zion@intzone.com>
  * @link    https://github.com/zionsg/ZnWP-Entity-Collection-Taxonomy-Plugin for canonical source repository
