@@ -334,7 +334,7 @@ class ZnWP_Entity_Collection_Taxonomy
      * as it is not possible for them to know the term_id beforehand.
      *
      * Hence, extra processing needed for entity terms as the slugs instead of term_id may be
-     * use for collection terms under the entity term metadata, eg:
+     * used for collection terms under the entity term metadata, eg:
      *   'My Entity One' => array(
      *     'slug' => 'my-entity-one',
      *     'term_meta' => array('my_collection' => array(1234, 'my-collection-bravo')), // 1234 assumed as term_id
@@ -916,7 +916,7 @@ class ZnWP_Entity_Collection_Taxonomy
         $args = array(
             'labels'            => $labels,
             'public'            => true,
-            'hierarchical'      => false,
+            'hierarchical'      => true,
             'show_ui'           => true,
             'show_in_nav_menus' => false,
             'query_var'         => true,
