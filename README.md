@@ -14,8 +14,8 @@ Demo plugin included.
 Steps
   - Click the "Download Zip" button on the righthand side of this GitHub page
   - Uncompress the zip file on your desktop
-  - Rename the uncompressed folder to `znwp_entity_collection_taxonomy_plugin` without the `-master` GitHub tag
-  - Copy the folder to your WordPress plugins folder OR compress the renamed folder and upload via the WordPress admin interface
+  - Copy the `znwp_entity_collection_taxonomy_plugin` folder to your WordPress plugins folder
+    OR compress that folder and upload via the WordPress admin interface
   - Activate the plugin
 
 ### Usage
