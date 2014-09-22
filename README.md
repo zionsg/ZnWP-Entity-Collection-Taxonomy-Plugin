@@ -23,4 +23,4 @@ This plugin only has 1 action hook - `znwp_entity_collection_taxonomy_run` which
 
 After installation, you will see 2 plugins installed - the plugin itself and a demo plugin. Activate the demo plugin to see it in action.
 
-View the source code of the [Demo Plugin](https://raw.githubusercontent.com/zionsg/ZnWP-Entity-Collection-Taxonomy-Plugin/master/demo.php) to see how to use the action hook.
+View the source code of the [Demo Plugin](https://raw.githubusercontent.com/zionsg/ZnWP-Entity-Collection-Taxonomy-Plugin/master/znwp_entity_collection_taxonomy_plugin/demo.php) to see how to use the action hook.
