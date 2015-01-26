@@ -15,5 +15,5 @@ register_activation_hook(__FILE__,   array($znwp_entity_collection_taxonomy_plug
 register_deactivation_hook(__FILE__, array($znwp_entity_collection_taxonomy_plugin, 'on_deactivation'));
 register_uninstall_hook(__FILE__,    array($znwp_entity_collection_taxonomy_plugin, 'on_uninstall'));
 
-// must be run after theme setup to allow functions.php in theme to add filter hook
+// must be run after theme setup to allow functions.php in theme to add action hook
 add_action('after_setup_theme', array($znwp_entity_collection_taxonomy_plugin, 'init'));
