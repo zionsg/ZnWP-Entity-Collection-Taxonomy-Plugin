@@ -1,4 +1,4 @@
-##ZnWP Entity Collection Taxonomy Plugin
+## ZnWP Entity Collection Taxonomy Plugin
 
 This WordPress plugin allows multiple 3rd party plugins to easily add custom entity & collection taxonomies and register with custom post types via an action hook.
 
